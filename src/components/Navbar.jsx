@@ -1,125 +1,161 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const linkBaseStyle = {
+    textDecoration: "none",
+    color: "#fff",
+    fontWeight: 600,
+    fontSize: "13px", // ✅ smaller
+    letterSpacing: "1px",
+    fontStyle: "italic",
+    padding: "8px 14px", // ✅ smaller
+    borderRadius: "10px",
+    border: "1px solid transparent",
+    background: "transparent",
+    transition: "all 0.25s ease",
+  };
+
   return (
     <nav
       style={{
-        padding: "14px 24px",
-        borderBottom: "2px solid #ff9500",
-        background: "#1a1a1a",
-        position: "sticky",
+        height: "68px", // ✅ smaller navbar height
+        padding: "0 26px",
+        background: isScrolled ? "rgba(0,0,0,0.95)" : "transparent",
+        position: "fixed",
         top: 0,
+        left: 0,
+        width: "100%",
         zIndex: 1000,
+        transition: "all 0.35s ease",
+        borderBottom: isScrolled ? "1px solid rgba(255,255,255,0.1)" : "none",
+        backdropFilter: isScrolled ? "blur(10px)" : "none",
       }}
     >
       <div
         style={{
+          height: "68px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          width: "100%",
+          fontFamily: "'Poppins', 'Segoe UI', sans-serif",
         }}
       >
-        {/* LOGO / BRAND */}
+        {/* LOGO */}
         <Link
           to="/"
           style={{
             textDecoration: "none",
-            fontSize: "20px",
+            fontSize: "22px", // ✅ smaller
             fontWeight: "900",
             color: "#fff",
-            letterSpacing: "0.5px",
+            letterSpacing: "-0.5px",
+            fontStyle: "italic",
           }}
         >
-          Planora ✨
+          Planora
         </Link>
 
-        {/* NAV LINKS */}
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        {/* LINKS */}
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+            marginRight: "90px", // ✅ links thoda left shift
+          }}
+        >
           <Link
             to="/"
-            style={{
-              textDecoration: "none",
-              color: "#ccc",
-              fontWeight: 600,
-              fontSize: "15px",
-              transition: "all 0.3s ease",
-              paddingBottom: "4px",
-              borderBottom: "2px solid transparent",
-            }}
+            style={linkBaseStyle}
             onMouseEnter={(e) => {
-              e.target.style.color = "#ff9500";
-              e.target.style.borderBottomColor = "#ff9500";
+              e.target.style.background = "rgba(255,255,255,0.10)";
+              e.target.style.border = "1px solid rgba(255,255,255,0.22)";
+              e.target.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.color = "#ccc";
-              e.target.style.borderBottomColor = "transparent";
+              e.target.style.background = "transparent";
+              e.target.style.border = "1px solid transparent";
+              e.target.style.transform = "translateY(0)";
             }}
           >
-            Home
+            HOME
           </Link>
 
           <Link
             to="/events"
-            style={{
-              textDecoration: "none",
-              color: "#ccc",
-              fontWeight: 600,
-              fontSize: "15px",
-              transition: "all 0.3s ease",
-              paddingBottom: "4px",
-              borderBottom: "2px solid transparent",
-            }}
+            style={linkBaseStyle}
             onMouseEnter={(e) => {
-              e.target.style.color = "#ff9500";
-              e.target.style.borderBottomColor = "#ff9500";
+              e.target.style.background = "rgba(255,255,255,0.10)";
+              e.target.style.border = "1px solid rgba(255,255,255,0.22)";
+              e.target.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.color = "#ccc";
-              e.target.style.borderBottomColor = "transparent";
+              e.target.style.background = "transparent";
+              e.target.style.border = "1px solid transparent";
+              e.target.style.transform = "translateY(0)";
             }}
           >
-            Events
+            EVENTS
           </Link>
 
           <Link
             to="/login"
-            style={{
-              textDecoration: "none",
-              color: "#ccc",
-              fontWeight: 600,
-              fontSize: "15px",
-              transition: "all 0.3s ease",
-              paddingBottom: "4px",
-              borderBottom: "2px solid transparent",
-            }}
+            style={linkBaseStyle}
             onMouseEnter={(e) => {
-              e.target.style.color = "#ff9500";
-              e.target.style.borderBottomColor = "#ff9500";
+              e.target.style.background = "rgba(255,255,255,0.10)";
+              e.target.style.border = "1px solid rgba(255,255,255,0.22)";
+              e.target.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.color = "#ccc";
-              e.target.style.borderBottomColor = "transparent";
+              e.target.style.background = "transparent";
+              e.target.style.border = "1px solid transparent";
+              e.target.style.transform = "translateY(0)";
             }}
           >
-            Login
+            LOGIN
           </Link>
 
+          {/* REGISTER */}
           <Link
             to="/register"
             style={{
               textDecoration: "none",
-              background: "#ff6b35",
-              color: "white",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              fontWeight: 600,
+              background: "linear-gradient(135deg, #00d4ff, #0099cc)",
+              color: "#fff",
+              padding: "9px 18px", // ✅ smaller
+              borderRadius: "12px",
+              fontWeight: 800,
               fontSize: "13px",
-              transition: "background 0.2s",
+              letterSpacing: "1px",
+              fontStyle: "italic",
+              transition: "all 0.25s ease",
+              boxShadow: "0 7px 18px rgba(0, 212, 255, 0.30)",
+              border: "1px solid rgba(255,255,255,0.18)",
             }}
-            onMouseEnter={(e) => (e.target.style.background = "#ff5522")}
-            onMouseLeave={(e) => (e.target.style.background = "#ff6b35")}
+            onMouseEnter={(e) => {
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow =
+                "0 10px 24px rgba(0, 212, 255, 0.45)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow =
+                "0 7px 18px rgba(0, 212, 255, 0.30)";
+            }}
           >
-            Register
+            REGISTER
           </Link>
         </div>
       </div>

@@ -1,485 +1,464 @@
 import { Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
+import { useState, useEffect, useRef } from "react";
+import "./Home.css";
 
 export default function Home() {
+  const [scrollX, setScrollX] = useState(-100);
+  const [heroOpacity, setHeroOpacity] = useState(0);
+  const [pageLoadTime] = useState(Date.now());
+  const animationFrameRef = useRef(null);
+
+  // ✅ CATEGORY animation states
+  const [visibleCards, setVisibleCards] = useState(new Set());
+  const cardRefs = useRef([]);
+
+  // ✅ UPCOMING EVENTS SCROLL REF
+  const eventScrollRef = useRef(null);
+
+  // ✅ TESTIMONIALS STATE
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const testimonialRef = useRef(null);
+  const [showTestimonial, setShowTestimonial] = useState(false);
+
+  // ✅ UPCOMING EVENTS DATA
+  const events = [
+    {
+      id: 1,
+      title: "TechFest 2026",
+      date: "15 Feb 2026",
+      location: "Seminar Hall",
+      price: "99 Seats Left",
+      tag: "Tech",
+      img: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&h=700&fit=crop",
+    },
+    {
+      id: 2,
+      title: "Hackathon Night",
+      date: "20 Feb 2026",
+      location: "Lab Block",
+      price: "50 Seats Left",
+      tag: "Hackathon",
+      img: "https://www.niemanlab.org/images/greaturbanhackcc.jpg",
+    },
+    {
+      id: 3,
+      title: "GDG Dev Meetup",
+      date: "25 Feb 2026",
+      location: "Auditorium",
+      price: "Free Entry",
+      tag: "Meetup",
+      img: "https://miro.medium.com/1*ia0qa3JHM-tw2SV51a_oow.jpeg",
+    },
+    {
+      id: 4,
+      title: "Cultural Night",
+      date: "28 Feb 2026",
+      location: "Open Ground",
+      price: "120 Seats Left",
+      tag: "Cultural",
+      img: "https://images.unsplash.com/photo-1522158637959-30385a09e0da?w=1200&h=700&fit=crop",
+    },
+  ];
+
+  // ✅ TESTIMONIALS DATA
+  const testimonials = [
+    {
+      name: "Catherine Williams",
+      img: "https://randomuser.me/api/portraits/women/44.jpg",
+      text: "“Planora made our event management extremely smooth. The UI is clean, registrations are fast and the real-time seat updates are just perfect.”",
+    },
+    {
+      name: "Aarav Mehta",
+      img: "https://randomuser.me/api/portraits/men/32.jpg",
+      text: "“The seat update feature is the best part. Registrations were managed automatically without any confusion.”",
+    },
+    {
+      name: "Sofia Martinez",
+      img: "https://randomuser.me/api/portraits/women/65.jpg",
+      text: "“Planora feels premium. The event browsing experience is fast, simple and very professional.”",
+    },
+  ];
+
+  // HERO animation (left to right)
+  useEffect(() => {
+    const animationDuration = 800;
+
+    const updateScroll = () => {
+      const elapsedTime = Date.now() - pageLoadTime;
+
+      if (elapsedTime < animationDuration) {
+        const animationProgress = elapsedTime / animationDuration;
+        const baseOffset = -100 + 100 * animationProgress;
+        const scrollOffset = window.scrollY * 0.7;
+
+        setScrollX(baseOffset + scrollOffset);
+        setHeroOpacity(animationProgress);
+
+        animationFrameRef.current = requestAnimationFrame(updateScroll);
+      } else {
+        setScrollX(window.scrollY * 0.7);
+        setHeroOpacity(1);
+      }
+    };
+
+    const handleScroll = () => {
+      const elapsedTime = Date.now() - pageLoadTime;
+      if (elapsedTime >= animationDuration) {
+        setScrollX(window.scrollY * 0.7);
+        setHeroOpacity(1);
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(updateScroll);
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [pageLoadTime]);
+
+  // ✅ CATEGORY CARDS animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisibleCards((prev) => new Set(prev).add(entry.target.id));
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // ✅ UPCOMING EVENTS AUTO SCROLL (LEFT → RIGHT) AND STOP
+  useEffect(() => {
+    const scrollBox = eventScrollRef.current;
+    if (!scrollBox) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            scrollBox.scrollTo({
+              left: scrollBox.scrollWidth,
+              behavior: "smooth",
+            });
+          }, 500);
+
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(scrollBox);
+
+    return () => observer.disconnect();
+  }, []);
+
+  // ✅ TESTIMONIAL SCROLL ANIMATION (down → up)
+  useEffect(() => {
+    const el = testimonialRef.current;
+    if (!el) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setShowTestimonial(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // ✅ CATEGORY DATA
+  const categories = [
+    {
+      title: "Music Events",
+      desc: "Live shows, DJs & concerts",
+      img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=60",
+      dir: "from-left",
+    },
+    {
+      title: "Tech Fest",
+      desc: "Hackathons, meetups & talks",
+      img: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=60",
+      dir: "from-left",
+    },
+    {
+      title: "Workshops",
+      desc: "Learn skills with experts",
+      img: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=60",
+      dir: "from-right",
+    },
+    {
+      title: "Cultural",
+      desc: "Dance, drama & celebrations",
+      img: "https://images.unsplash.com/photo-1505428160878-8e349f4d301c?auto=format&fit=crop&w=1200&q=60",
+      dir: "from-right",
+    },
+  ];
+
   return (
     <MainLayout>
-      {/* HERO SECTION */}
-      <div
-        style={{
-          padding: "25px 40px 35px 40px",
-          background: "linear-gradient(135deg, rgba(26,26,26,0.85) 0%, rgba(45,45,45,0.8) 100%), url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&h=600&fit=crop')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundAttachment: "fixed",
-          color: "white",
-          minHeight: "320px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          marginBottom: "0",
-        }}
+      {/* HERO */}
+      <section className="home-hero">
+        <div className="home-hero-overlay">
+          <div
+            className="home-hero-content"
+            style={{
+              transform: `translateX(${scrollX}px)`,
+              opacity: heroOpacity,
+              transition: "transform 0.15s ease-out",
+            }}
+          >
+            <div className="hero-subtitle">SMART • SECURE • REAL-TIME</div>
+
+            <h1>
+              Plan Your Events <br />
+              <span>Like a Pro.</span>
+            </h1>
+
+            <p className="hero-tagline">
+              Planora is a modern Event Management System where admins create
+              events, users register instantly, and seats update in real-time —
+              making every event smooth, fast, and perfectly organized.
+            </p>
+
+            <div className="home-hero-actions">
+              <Link to="/events" className="btn-primary">
+                Explore Events
+              </Link>
+
+              <Link to="/events" className="btn-secondary">
+                Register Now →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CATEGORIES */}
+      <section className="home-section">
+        <div className="container">
+          <div className="section-head center">
+            <h2 className="dual-heading">
+              EXPLORE EVENT <span>CATEGORIES</span>
+            </h2>
+          </div>
+
+          <div className="category-grid">
+            {categories.map((c, i) => (
+              <div
+                className={`category-card image-card ${c.dir} ${
+                  visibleCards.has(`cat-card-${i}`) ? "show" : ""
+                }`}
+                key={i}
+                id={`cat-card-${i}`}
+                ref={(el) => (cardRefs.current[i] = el)}
+                style={{ backgroundImage: `url(${c.img})` }}
+              >
+                <div className="category-overlay">
+                  <h3>{c.title}</h3>
+                  <p>{c.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* UPCOMING EVENTS */}
+      <section className="home-section alt-bg">
+        <div className="container">
+          <div className="section-head center">
+            <h2 className="big-heading">UPCOMING EVENTS</h2>
+          </div>
+
+          <div className="event-scroll-wrapper">
+            {/* LEFT ARROW */}
+            <div
+              className="scroll-arrow-left"
+              onClick={() => {
+                if (eventScrollRef.current) {
+                  eventScrollRef.current.scrollBy({
+                    left: -420,
+                    behavior: "smooth",
+                  });
+                }
+              }}
+            >
+              <span>‹</span>
+            </div>
+
+            {/* SCROLL */}
+            <div className="event-scroll" ref={eventScrollRef}>
+              {events.map((e) => (
+                <div className="event-card" key={e.id}>
+                  <div
+                    className="event-img"
+                    style={{ backgroundImage: `url(${e.img})` }}
+                  >
+                    <span className="event-tag">{e.tag}</span>
+                    <span className="event-price">{e.price}</span>
+
+                    <div className="event-hover-card">
+                      <h3>{e.title}</h3>
+                      <p className="event-meta">📅 {e.date}</p>
+                      <p className="event-meta">📍 {e.location}</p>
+
+                      <div className="event-actions">
+                        <Link to={`/events/${e.id}`} className="btn-view">
+                          View Details
+                        </Link>
+
+                        <Link to={`/register/${e.id}`} className="btn-register">
+                          Register →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* RIGHT ARROW */}
+            <div
+              className="scroll-arrow-right"
+              onClick={() => {
+                if (eventScrollRef.current) {
+                  eventScrollRef.current.scrollBy({
+                    left: 420,
+                    behavior: "smooth",
+                  });
+                }
+              }}
+            >
+              <span>›</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WHY CHOOSE PLANORA */}
+  {/* WHY CHOOSE PLANORA */}
+<section className="home-section why-planora">
+  <div className="container">
+    <div className="section-head center">
+      <h2 className="dual-heading">
+        WHY CHOOSE <span>PLANORA</span>
+      </h2>
+    </div>
+
+    <div className="why-grid">
+      {[
+        {
+          title: "Fast Registrations",
+          desc: "One-click registration with real-time seat updates.",
+        },
+        {
+          title: "Secure System",
+          desc: "Role-based access for Admin & Users with clean flow.",
+        },
+        {
+          title: "Smart Event Tracking",
+          desc: "Users can explore events and admins monitor registrations.",
+        },
+        {
+          title: "Real-Time Seats",
+          desc: "Seat availability updates instantly after registration.",
+        },
+      ].map((item, i) => (
+        <div
+          key={i}
+          className={`why-card ${visibleCards.has(`why-card-${i}`) ? "show" : ""}`}
+          id={`why-card-${i}`}
+          ref={(el) => (cardRefs.current[10 + i] = el)}
+          style={{ transitionDelay: `${i * 0.02}s` }}
+        >
+          <h3>{item.title}</h3>
+          <p>{item.desc}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+
+      {/* TESTIMONIALS */}
+      <section
+        ref={testimonialRef}
+        className={`home-section testimonials ${showTestimonial ? "show" : ""}`}
       >
-        <h1 style={{ 
-          fontSize: "42px", 
-          marginBottom: "14px",
-          fontWeight: "900",
-          lineHeight: "1.1",
-          maxWidth: "800px",
-        }}>
-          Unforgettable
-          <br />
-          <span style={{ color: "#ff9500" }}>Experiences</span>
-          <br />
-          Await You
-        </h1>
-
-        <p style={{ 
-          fontSize: "18px", 
-          maxWidth: "600px", 
-          lineHeight: "28px",
-          color: "#ccc",
-          marginBottom: "30px",
-          fontWeight: "300",
-        }}>
-          Curate, discover, and manage events that leave lasting impressions. 
-          From intimate gatherings to grand celebrations.
-        </p>
-
-        <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
-          <Link
-            to="/events"
-            style={{
-              padding: "14px 28px",
-              background: "#ff9500",
-              color: "white",
-              borderRadius: "6px",
-              textDecoration: "none",
-              fontWeight: "700",
-              fontSize: "15px",
-              transition: "background 0.3s",
-              display: "inline-block",
-            }}
-            onMouseEnter={(e) => (e.target.style.background = "#ff8500")}
-            onMouseLeave={(e) => (e.target.style.background = "#ff9500")}
-          >
-            Explore Events →
-          </Link>
-
-          <input
-            type="text"
-            placeholder="Search events..."
-            style={{
-              padding: "12px 18px",
-              borderRadius: "6px",
-              border: "none",
-              width: "280px",
-              fontSize: "14px",
-              background: "rgba(255,255,255,0.95)",
-            }}
-          />
-        </div>
-      </div>
-
-      {/* FEATURED EVENTS */}
-      <div style={{ marginTop: "60px", padding: "40px", background: "#f5f5f5", borderRadius: "12px" }}>
-        <h2 style={{ fontSize: "32px", marginBottom: "10px", color: "#000" }}>
-          🔥 Featured Events
-        </h2>
-        <p style={{ color: "#666", marginBottom: "30px" }}>
-          Discover trending events and register instantly.
-        </p>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: "20px",
-          }}
-        >
-          {/* CARD 1 */}
-          <div
-            style={{
-              border: "none",
-              borderRadius: "12px",
-              overflow: "hidden",
-              background: "#fff",
-              color: "#000",
-              transition: "transform 0.3s, box-shadow 0.3s",
-              cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-8px)";
-              e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-            }}
-          >
-            {/* IMAGE */}
-            <div
-              style={{
-                height: "120px",
-                background: "linear-gradient(135deg, #ff9a56 0%, #ff6b9d 100%)",
-                position: "relative",
-                backgroundImage: "url('https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=500&h=300&fit=crop')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {/* Category Badge */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  left: "12px",
-                  background: "#ff9500",
-                  color: "#fff",
-                  padding: "6px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                }}
-              >
-                Music
-              </div>
-
-              {/* Price Badge */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  right: "12px",
-                  background: "#000",
-                  color: "#fff",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "700",
-                }}
-              >
-                $89
-              </div>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: "20px" }}>
-              <h3 style={{ fontSize: "18px", marginBottom: "12px", color: "#000" }}>TechFest 2026</h3>
-              <p style={{ color: "#ff9500", marginBottom: "8px", fontSize: "14px" }}>📅 15 Feb 2026</p>
-              <p style={{ color: "#666", marginBottom: "15px", fontSize: "14px" }}>📍 Seminar Hall</p>
-              <Link to="/events/1" style={{ color: "#ff9500", textDecoration: "none", fontWeight: "700", fontSize: "14px" }}>
-                View Details →
-              </Link>
-            </div>
+        <div className="container">
+          <div className="section-head center testimonial-head">
+            <h2 className="dual-heading">
+              WHAT OUR <span>CLIENTS SAY</span>
+            </h2>
           </div>
 
-          {/* CARD 2 */}
-          <div
-            style={{
-              border: "none",
-              borderRadius: "12px",
-              overflow: "hidden",
-              background: "#fff",
-              color: "#000",
-              transition: "transform 0.3s, box-shadow 0.3s",
-              cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-8px)";
-              e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-            }}
-          >
-            {/* IMAGE */}
-            <div
-              style={{
-                  height: "120px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                position: "relative",
-                backgroundImage: "url('https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&h=300&fit=crop')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {/* Category Badge */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  left: "12px",
-                  background: "#667eea",
-                  color: "#fff",
-                  padding: "6px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                }}
-              >
-                Conference
-              </div>
-
-              {/* Price Badge */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  right: "12px",
-                  background: "#000",
-                  color: "#fff",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "700",
-                }}
-              >
-                $299
-              </div>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: "14px" }}>
-              <h3 style={{ fontSize: "15px", marginBottom: "8px", color: "#000" }}>Hackathon Night</h3>
-              <p style={{ color: "#667eea", marginBottom: "8px", fontSize: "14px" }}>📅 20 Feb 2026</p>
-              <p style={{ color: "#666", marginBottom: "15px", fontSize: "14px" }}>📍 Lab Block</p>
-              <Link to="/events/2" style={{ color: "#667eea", textDecoration: "none", fontWeight: "700", fontSize: "14px" }}>
-                View Details →
-              </Link>
-            </div>
-          </div>
-
-          {/* CARD 3 */}
-          <div
-            style={{
-              border: "none",
-              borderRadius: "12px",
-              overflow: "hidden",
-              background: "#fff",
-              color: "#000",
-              transition: "transform 0.3s, box-shadow 0.3s",
-              cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-8px)";
-              e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-            }}
-          >
-            {/* IMAGE */}
-            <div
-              style={{
-                height: "160px",
-                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                position: "relative",
-                backgroundImage: "url('https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=500&h=300&fit=crop')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {/* Category Badge */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  left: "12px",
-                  background: "#f5576c",
-                  color: "#fff",
-                  padding: "6px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "700",
-                }}
-              >
-                Wedding
-              </div>
-
-              {/* Price Badge */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  right: "12px",
-                  background: "#000",
-                  color: "#fff",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "700",
-                }}
-              >
-                Free
-              </div>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: "14px" }}>
-              <h3 style={{ fontSize: "15px", marginBottom: "8px", color: "#000" }}>GDG Dev Meetup</h3>
-              <p style={{ color: "#f5576c", marginBottom: "8px", fontSize: "14px" }}>📅 25 Feb 2026</p>
-              <p style={{ color: "#666", marginBottom: "15px", fontSize: "14px" }}>📍 Auditorium</p>
-              <Link to="/events/3" style={{ color: "#f5576c", textDecoration: "none", fontWeight: "700", fontSize: "14px" }}>
-                View Details →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* WHY CHOOSE US */}
-      <div style={{ marginTop: "60px", padding: "60px 40px", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", borderRadius: "12px" }}>
-        <h2 style={{ fontSize: "32px", marginBottom: "10px", color: "#fff", textAlign: "center" }}>
-          💡 Why Planora?
-        </h2>
-        <p style={{ color: "#aaa", marginBottom: "50px", textAlign: "center" }}>
-          Built for secure, efficient and real-time event handling.
-        </p>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "20px",
-          }}
-        >
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 149, 0, 0.3)",
-              borderRadius: "12px",
-              padding: "30px",
-              color: "#fff",
-              transition: "transform 0.3s, background 0.3s, border 0.3s, box-shadow 0.3s",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-5px)";
-              e.currentTarget.style.background = "rgba(255, 149, 0, 0.15)";
-              e.currentTarget.style.border = "1px solid #ff9500";
-              e.currentTarget.style.boxShadow = "0 8px 20px rgba(255, 149, 0, 0.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-              e.currentTarget.style.border = "1px solid rgba(255, 149, 0, 0.3)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <h3 style={{ fontSize: "18px", marginBottom: "12px", color: "#ff9500" }}>🔐 Role-Based Access</h3>
-            <p style={{ color: "#aaa", lineHeight: "20px" }}>
-              Admin can manage events & registrations while users can only browse
-              and register securely.
+          <div className="testimonial-box">
+            <p key={activeTestimonial} className="testimonial-text">
+              {testimonials[activeTestimonial].text}
             </p>
-          </div>
 
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 149, 0, 0.3)",
-              borderRadius: "12px",
-              padding: "30px",
-              color: "#fff",
-              transition: "transform 0.3s, background 0.3s, border 0.3s, box-shadow 0.3s",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-5px)";
-              e.currentTarget.style.background = "rgba(255, 149, 0, 0.15)";
-              e.currentTarget.style.border = "1px solid #ff9500";
-              e.currentTarget.style.boxShadow = "0 8px 20px rgba(255, 149, 0, 0.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-              e.currentTarget.style.border = "1px solid rgba(255, 149, 0, 0.3)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <h3 style={{ fontSize: "18px", marginBottom: "12px", color: "#ff9500" }}>⚡ Real-Time Registration</h3>
-            <p style={{ color: "#aaa", lineHeight: "20px" }}>
-              Seats and registrations update instantly, preventing overbooking
-              and confusion.
-            </p>
-          </div>
+            <div className="testimonial-user">
+              <img
+                src={testimonials[activeTestimonial].img}
+                alt={testimonials[activeTestimonial].name}
+              />
+              <h4>{testimonials[activeTestimonial].name}</h4>
+            </div>
 
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 149, 0, 0.3)",
-              borderRadius: "12px",
-              padding: "30px",
-              color: "#fff",
-              transition: "transform 0.3s, background 0.3s, border 0.3s, box-shadow 0.3s",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-5px)";
-              e.currentTarget.style.background = "rgba(255, 149, 0, 0.15)";
-              e.currentTarget.style.border = "1px solid #ff9500";
-              e.currentTarget.style.boxShadow = "0 8px 20px rgba(255, 149, 0, 0.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-              e.currentTarget.style.border = "1px solid rgba(255, 149, 0, 0.3)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <h3 style={{ fontSize: "18px", marginBottom: "12px", color: "#ff9500" }}>📊 Admin Dashboard</h3>
-            <p style={{ color: "#aaa", lineHeight: "20px" }}>
-              Admin gets complete stats like total events, total registrations
-              and user details.
-            </p>
+            <div className="testimonial-dots">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  className={`dot ${activeTestimonial === i ? "active" : ""}`}
+                  onClick={() => setActiveTestimonial(i)}
+                ></button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* HOW IT WORKS */}
-      <div style={{ marginTop: "60px", padding: "0 40px" }}>
-        <h2 style={{ fontSize: "32px", marginBottom: "30px", color: "#fff" }}>
-          🚀 How It Works
-        </h2>
+      {/* SEARCH BAR CTA */}
+      <section className="home-cta search-cta">
+        <div className="container cta-box">
+          <h2>Search Your Next Event</h2>
+          <p>Find events instantly by name, category or location.</p>
 
-        <div style={{ lineHeight: "32px", fontSize: "16px", color: "#ccc", maxWidth: "700px" }}>
-          <p>
-            <span style={{ color: "#ff9500", fontWeight: "700", marginRight: "12px" }}>1</span>
-            Admin creates events and publishes them.
-          </p>
-          <p>
-            <span style={{ color: "#ff9500", fontWeight: "700", marginRight: "12px" }}>2</span>
-            Users browse events and open event details.
-          </p>
-          <p>
-            <span style={{ color: "#ff9500", fontWeight: "700", marginRight: "12px" }}>3</span>
-            Users register and seats update automatically.
-          </p>
-          <p>
-            <span style={{ color: "#ff9500", fontWeight: "700", marginRight: "12px" }}>4</span>
-            Admin tracks registrations in real-time.
-          </p>
+          <div className="search-bar">
+            <input type="text" placeholder="Search events..." />
+            <Link to="/events" className="search-btn">
+              Search →
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* FOOTER */}
-      <div
-        style={{
-          marginTop: "80px",
-          padding: "40px",
-          borderTop: "1px solid #333",
-          textAlign: "center",
-          color: "#666",
-          fontSize: "14px",
-        }}
-      >
+      <footer className="home-footer">
         © {new Date().getFullYear()} Planora • Event Management System
-      </div>
+      </footer>
     </MainLayout>
   );
 }
